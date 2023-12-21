@@ -1,5 +1,9 @@
 ﻿namespace FIS
 {
+    public class FlightData
+    {
+        public List<Flight> Flights { get; set; }
+    }
     public enum FlightStatus
     {
         OnTime,

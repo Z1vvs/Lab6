@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace FIS
@@ -13,9 +14,14 @@ namespace FIS
         public void LoadFlightsFromJson(string filePath)
         {
             string jsonContent = File.ReadAllText(filePath);
-            var jsonObject = JObject.Parse(jsonContent);
-            var flightsArray = jsonObject["flights"].ToObject<List<Flight>>();
-            flights.AddRange(flightsArray);
+            var flightData = JsonConvert.DeserializeObject<FlightData>(jsonContent);
+            flights.AddRange(flightData.Flights);
+        }
+        public void SaveFlightsToJson(string filePath)
+        {
+            var flightData = new FlightData { Flights = flights };
+            var jsonContent = JsonConvert.SerializeObject(flightData);
+            File.WriteAllText(filePath, jsonContent);
         }
         public void AddFlight(Flight flight)
         {
@@ -59,11 +65,11 @@ namespace FIS
                 return new List<Flight>();
             }
         }
-        public List<Flight> GetFlightsArrivedInLastHourOrByTimeRange(string endTimeString)
+        public List<Flight> GetFlightsArrivedInLastHourOrByTimeRange(string endTimeString, double timeRangeInHours)
         {
             if (DateTime.TryParse(endTimeString, out DateTime endTime))
             {
-                DateTime startTimeLastHour = endTime.AddHours(-1);
+                DateTime startTimeLastHour = endTime.AddHours(-timeRangeInHours);
                 return flights.Where(f => f.ArrivalTime >= startTimeLastHour && f.ArrivalTime <= endTime)
                     .OrderBy(f => f.DepartureTime)
                     .ToList();
@@ -103,6 +109,7 @@ namespace FIS
                     AircraftType = "Boeing 747",
                     Terminal = "A"
                 });
+                flightSystem.SaveFlightsToJson("E:\\Visual Proggannent\\ConsoleApp1\\ConsoleApp1\\flights_data_modified.json");
                 Console.WriteLine("\nAirline1 added");
                 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 flightSystem.AddFlight(new Flight
@@ -117,9 +124,11 @@ namespace FIS
                     AircraftType = "Airbus A320",
                     Terminal = "B"
                 });
+                flightSystem.SaveFlightsToJson("E:\\Visual Proggannent\\ConsoleApp1\\ConsoleApp1\\flights_data_modified.json");
                 Console.WriteLine("\nAirline2 added");
                 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                flightSystem.RemoveFlight("Airline2");
+                flightSystem.RemoveFlight("FL456");
+                flightSystem.SaveFlightsToJson("E:\\Visual Proggannent\\ConsoleApp1\\ConsoleApp1\\flights_data_modified.json");
                 Console.WriteLine("\nAirline2 deleted");
                 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 Console.WriteLine("\nFlights by Airline:");
@@ -130,7 +139,7 @@ namespace FIS
                 var delayedFlights = flightSystem.GetDelayedFlights();
                 DisplayFlights(delayedFlights);
                 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                Console.WriteLine("Flights by Departure Date:");
+                Console.WriteLine("\nFlights by Departure Date:");
                 var departureDateFlights = flightSystem.GetFlightsByDepartureDate("2023-06-15");
                 DisplayFlights(departureDateFlights);
                 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,7 +148,7 @@ namespace FIS
                 DisplayFlights(timeRangeFlights);
                 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 Console.WriteLine("\nFlights Arrived in Last Hour or Within Time Range:");
-                var lastHourFlights = flightSystem.GetFlightsArrivedInLastHourOrByTimeRange("2023-05-31T23:59:59");
+                var lastHourFlights = flightSystem.GetFlightsArrivedInLastHourOrByTimeRange("2023-05-31T23:59:59", 1);
                 DisplayFlights(lastHourFlights);
                 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             }
